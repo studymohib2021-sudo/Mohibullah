@@ -1,0 +1,6 @@
+{
+  "name": "HSK 1-4 Bengali Pronunciation Companion",
+  "description": "Master HSK 1-4 Chinese vocabulary with high-precision corrected Bengali phonetic guides, real-world examples, native audio output, and dynamic interactive quizzes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
