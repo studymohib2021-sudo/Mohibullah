@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Compass, Star, BookOpen, Flame, Award, 
-  HelpCircle, Volume2, Sparkles, LayoutDashboard, Layers, CheckSquare, RefreshCw, Moon, Sun
+  HelpCircle, Volume2, Sparkles, LayoutDashboard, Layers, CheckSquare, RefreshCw, Moon, Sun,
+  FileSpreadsheet
 } from 'lucide-react';
 import { HskWord, UserStats } from './types';
 
@@ -11,6 +12,7 @@ import WordExplorer from './components/WordExplorer';
 import Flashcards from './components/Flashcards';
 import Quiz from './components/Quiz';
 import CorrectionGuide from './components/CorrectionGuide';
+import GoogleSheetsIntegration from './components/GoogleSheetsIntegration';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -131,6 +133,33 @@ export default function App() {
         levelProgress: updatedProgress
       });
     }
+  };
+
+  const handleAddCustomWordsBatch = (words: HskWord[]) => {
+    // Filter duplicates
+    const uniqueNewWords = words.filter(word => !customUploadedWords.some(existing => existing.character === word.character));
+    if (uniqueNewWords.length === 0) return;
+
+    const updatedList = [...uniqueNewWords, ...customUploadedWords];
+    setCustomUploadedWords(updatedList);
+    localStorage.setItem('hsk_custom_words', JSON.stringify(updatedList));
+
+    // Update level totals dynamically
+    const updatedProgress = { ...stats.levelProgress };
+    uniqueNewWords.forEach(word => {
+      const lv = word.level as keyof typeof stats.levelProgress;
+      const currentProgress = updatedProgress[lv] || { completed: 0, total: 3 };
+      updatedProgress[lv] = {
+        ...currentProgress,
+        total: currentProgress.total + 1,
+        completed: currentProgress.completed + 1
+      };
+    });
+
+    saveStats({
+      ...stats,
+      levelProgress: updatedProgress
+    });
   };
 
   const handleUpdateQuizStats = (score: number, total: number, levelNum: number) => {
@@ -260,7 +289,8 @@ export default function App() {
               { id: 'explorer', label: 'শব্দকোষ', icon: Compass },
               { id: 'flashcards', label: 'ফ্লশকার্ড', icon: Layers },
               { id: 'quiz', label: 'সক্রিয় কুইজ', icon: CheckSquare },
-              { id: 'correction', label: 'উচ্চারণ সংশোধনী', icon: Sparkles }
+              { id: 'correction', label: 'উচ্চারণ সংশোধনী', icon: Sparkles },
+              { id: 'sheets', label: 'গুগল শিট', icon: FileSpreadsheet }
             ].map(tab => {
               const IconComp = tab.icon;
               return (
@@ -326,6 +356,18 @@ export default function App() {
 
         {activeTab === 'correction' && (
           <CorrectionGuide />
+        )}
+
+        {activeTab === 'sheets' && (
+          <GoogleSheetsIntegration
+            stats={stats}
+            customUploadedWords={customUploadedWords}
+            onAddCustomWordsBatch={handleAddCustomWordsBatch}
+            onClearCustomWords={() => {
+              setCustomUploadedWords([]);
+              localStorage.removeItem('hsk_custom_words');
+            }}
+          />
         )}
 
       </main>

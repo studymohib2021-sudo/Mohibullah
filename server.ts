@@ -3,7 +3,7 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
-import { getDynamicFallbackWord, generateLocalQuizOnServer } from "./src/utils/fallbackGenerator";
+import { getDynamicFallbackWord, generateLocalQuizOnServer, masterVocabularyListOnServer } from "./src/utils/fallbackGenerator";
 
 dotenv.config();
 
@@ -215,6 +215,18 @@ Return strictly a JSON array of questions, each matching this structure:
     const fallbackQuiz = generateLocalQuizOnServer(requestedLevel, length);
     return res.json(fallbackQuiz);
   }
+});
+
+// API Endpoint: Word Lookup for exporting to Sheets
+app.post("/api/words/lookup", (req, res) => {
+  const { ids } = req.body || {};
+  if (!ids || !Array.isArray(ids)) {
+    return res.status(400).json({ error: "Word IDs array is required" });
+  }
+
+  // Filter master list to include matched ids
+  const matched = masterVocabularyListOnServer.filter(word => ids.includes(word.id));
+  return res.json({ words: matched });
 });
 
 // Vite Middleware & Static Output Configuration
